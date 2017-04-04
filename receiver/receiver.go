@@ -68,7 +68,7 @@ func (r *Receiver) handle(conn *net.TCPConn) {
 		return
 	}
 
-	descriptor, err := models.NewDescriptor(buf)
+	descriptor, err := models.FromBuff(buf)
 	if err != nil {
 		printErr(err)
 		return

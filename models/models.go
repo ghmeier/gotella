@@ -7,11 +7,11 @@ import (
 )
 
 type Descriptor struct {
-	Version string           `json:"version"`
-	Header  DescriptorHeader `json:"header"`
-	IP      string           `json:"ip"`
-	Port    string           `json:"port"`
-	Payload []byte           `json:"payload"`
+	Version string            `json:"version"`
+	Header  *DescriptorHeader `json:"header"`
+	IP      string            `json:"ip"`
+	Port    int               `json:"port"`
+	Payload []byte            `json:"payload"`
 }
 
 type DescriptorHeader struct {
@@ -22,7 +22,12 @@ type DescriptorHeader struct {
 	Length int            `json:"length"`
 }
 
-func NewDescriptor(buf []byte) (*Descriptor, error) {
+type Pong struct {
+	Files int `json:"files"`
+	Size  int `json:"size"`
+}
+
+func FromBuff(buf []byte) (*Descriptor, error) {
 	var d Descriptor
 	err := json.Unmarshal(buf, &d)
 
@@ -31,6 +36,23 @@ func NewDescriptor(buf []byte) (*Descriptor, error) {
 	}
 
 	return &d, nil
+}
+
+func PongDescriptor(ip string, port int, p *Pong, h *DescriptorHeader) *Descriptor {
+	buf, _ := json.Marshal(p)
+	return &Descriptor{
+		Version: "0.4",
+		IP:      ip,
+		Port:    port,
+		Payload: buf,
+		Header: &DescriptorHeader{
+			ID:     uuid.NewUUID(),
+			Type:   PONG,
+			TTL:    h.TTL - 1,
+			Hops:   h.Hops + 1,
+			Length: len(buf),
+		},
+	}
 }
 
 func toDescriptorType(i int) DescriptorType {
