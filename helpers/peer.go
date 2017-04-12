@@ -42,7 +42,6 @@ func (h *peerHelper) Put(p *models.Peer) error {
 	if err != nil {
 		return err
 	}
-
 	if !exists {
 		err = h.redis.Append(h.listKey, addr)
 		if err != nil {

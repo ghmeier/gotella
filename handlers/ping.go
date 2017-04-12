@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/ghmeier/gotella/models"
@@ -12,22 +13,14 @@ type pingHandler struct {
 }
 
 func HandlePing(ctx *Context) receiver.ReceiverFunc {
-	return &pingHandler{
-		handler: newHandler(ctx.Peer, ctx.Descriptor),
-	}.ping
+	p := &pingHandler{
+		handler: newHandler(ctx.Peer, ctx.Descriptor, ctx.Files),
+	}
+	return p.ping
 }
 
 func (h *pingHandler) ping(conn *net.TCPConn, d *models.Descriptor) {
-	addr := conn.LocalAddr()
-	tcpAddr, _ := net.ResolveTCPAddr(addr.Network(), addr.String())
-
-	descriptor := models.PongDescriptor(
-		tcpAddr.IP.String(),
-		tcpAddr.Port,
-		&models.Pong{},
-		d.Header)
-	send(conn, descriptor)
-
+	fmt.Printf("%s: ping from %s:%d\n", d.Header.ID.String(), d.IP, d.Port)
 	e, err := h.descriptor.Exists(d.Header.ID)
 	if err != nil {
 		printError(err)
@@ -37,16 +30,30 @@ func (h *pingHandler) ping(conn *net.TCPConn, d *models.Descriptor) {
 		return
 	}
 
-	err = h.descriptor.Put(d.Header.ID, d.IP, d.Port)
+	host, port := localAddr(conn)
+	descriptor := models.PongDescriptor(
+		host,
+		port,
+		&models.Pong{
+			Files: h.files.Count(),
+			Size:  h.files.Size(),
+		},
+		d)
+	fmt.Printf("%s: ponging %s:%d\n", descriptor.Header.ID.String(), d.IP, d.Port)
+	connectAndSend(fmt.Sprintf("%s:%d", d.IP, d.Port), descriptor)
+
+	err = h.peer.Put(&models.Peer{
+		IP:    d.IP,
+		Port:  d.Port,
+		Files: 0,
+		Size:  0,
+	})
+
+	err = h.descriptor.Put(d)
 	if err != nil {
 		printError(err)
 		return
 	}
 
-	list, err := h.peer.List()
-	if err != nil {
-		printError(err)
-		return
-	}
-
+	h.propogate(d)
 }

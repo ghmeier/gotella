@@ -7,10 +7,17 @@ import (
 	"github.com/ghmeier/gotella/receiver"
 )
 
-func HandlePush(ctx *Context) receiver.ReceiverFunc {
-	return newHandler(ctx.Peer, ctx.Descriptor).push
+type pushHandler struct {
+	*handler
 }
 
-func (h *handler) push(conn *net.TCPConn, d *models.Descriptor) {
+func HandlePush(ctx *Context) receiver.ReceiverFunc {
+	p := &pushHandler{
+		handler: newHandler(ctx.Peer, ctx.Descriptor, ctx.Files),
+	}
+	return p.push
+}
+
+func (h *pushHandler) push(conn *net.TCPConn, d *models.Descriptor) {
 
 }

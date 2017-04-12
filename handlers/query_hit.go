@@ -7,10 +7,17 @@ import (
 	"github.com/ghmeier/gotella/receiver"
 )
 
-func HandleQueryHit(ctx *Context) receiver.ReceiverFunc {
-	return newHandler(ctx.Peer, ctx.Descriptor).queryHit
+type queryHitHandler struct {
+	*handler
 }
 
-func (h *handler) queryHit(conn *net.TCPConn, d *models.Descriptor) {
+func HandleQueryHit(ctx *Context) receiver.ReceiverFunc {
+	q := &queryHitHandler{
+		handler: newHandler(ctx.Peer, ctx.Descriptor, ctx.Files),
+	}
+	return q.queryHit
+}
+
+func (h *queryHitHandler) queryHit(conn *net.TCPConn, d *models.Descriptor) {
 
 }

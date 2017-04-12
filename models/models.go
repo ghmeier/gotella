@@ -6,6 +6,8 @@ import (
 	"github.com/pborman/uuid"
 )
 
+const DEFAULT_TTL = 5
+
 type Descriptor struct {
 	Version string            `json:"version"`
 	Header  *DescriptorHeader `json:"header"`
@@ -23,18 +25,44 @@ type DescriptorHeader struct {
 }
 
 type Pong struct {
-	Files int `json:"files"`
-	Size  int `json:"size"`
+	Files int   `json:"files"`
+	Size  int64 `json:"size"`
+}
+
+type Query struct {
+	Filename    string `json:"filename"`
+	RequestIP   string `json:"ip"`
+	RequestPort string `json:"port"`
+}
+
+type QueryHit struct {
+	Hits    int      `json:"hits"`
+	IP      string   `json:"ip"`
+	Port    int      `json:"port"`
+	Results []Result `json:"results"`
+}
+
+type Result struct {
+	Name  string `json:"name"`
+	Size  int64  `json:"size"`
+	Index string `json:"index"`
+}
+
+type DescriptorCache struct {
+	ID   uuid.UUID      `json:"id"`
+	IP   string         `json:"ip"`
+	Port int            `json:"port"`
+	Type DescriptorType `json:"type"`
 }
 
 type Peer struct {
 	IP    string `json:"ip"`
 	Port  int    `json:"port"`
 	Files int    `json:"files"`
-	Size  int    `json:"size"`
+	Size  int64  `json:"size"`
 }
 
-func FromBuff(buf []byte) (*Descriptor, error) {
+func FromBuf(buf []byte) (*Descriptor, error) {
 	var d Descriptor
 	err := json.Unmarshal(buf, &d)
 
@@ -45,28 +73,68 @@ func FromBuff(buf []byte) (*Descriptor, error) {
 	return &d, nil
 }
 
-func PongDescriptor(ip string, port int, p *Pong, h *DescriptorHeader) *Descriptor {
+func PongDescriptor(ip string, port int, p *Pong, d *Descriptor) *Descriptor {
 	buf, _ := json.Marshal(p)
 	header := &DescriptorHeader{
-		ID:     uuid.NewUUID(),
+		ID:     d.Header.ID,
 		Type:   PONG,
-		TTL:    h.Hops,
+		TTL:    d.Header.Hops,
 		Hops:   0,
 		Length: len(buf),
 	}
-	return newDescriptor(ip, port, buf, header)
+	return NewDescriptor(ip, port, buf, header)
 }
 
-func PingDescriptor() *Descriptor {
+func PingDescriptor(ip string, port int) *Descriptor {
 	buf := make([]byte, 0)
-    header := &DescriptorHeader{
-        ID:
-    }
+	header := &DescriptorHeader{
+		ID:     uuid.NewUUID(),
+		Type:   PING,
+		TTL:    DEFAULT_TTL,
+		Hops:   0,
+		Length: 0,
+	}
+	return NewDescriptor(ip, port, buf, header)
+}
+
+func QueryDescriptor(ip string, port int, q *Query) *Descriptor {
+	buf, _ := json.Marshal(q)
+	header := &DescriptorHeader{
+		ID:     uuid.NewUUID(),
+		Type:   QUERY,
+		TTL:    DEFAULT_TTL,
+		Hops:   0,
+		Length: len(buf),
+	}
+	return NewDescriptor(ip, port, buf, header)
+}
+
+func QueryHitDescriptor(ip string, port int, q *QueryHit, d *Descriptor) *Descriptor {
+	buf, _ := json.Marshal(q)
+	header := &DescriptorHeader{
+		ID:     d.Header.ID,
+		Type:   QUERYHIT,
+		TTP:    d.Header.Hops,
+		Hops:   0,
+		Length: len(buf),
+	}
+	return NewDescriptor(ip, port, buf, header)
+}
+
+func (d *Descriptor) Next() *Descriptor {
+	header := &DescriptorHeader{
+		ID:     d.Header.ID,
+		Type:   d.Header.Type,
+		TTL:    d.Header.TTL - 1,
+		Hops:   d.Header.Hops + 1,
+		Length: d.Header.Length,
+	}
+	return NewDescriptor(d.IP, d.Port, d.Payload, header)
 }
 
 func NewDescriptor(ip string, port int, payload []byte, h *DescriptorHeader) *Descriptor {
 	return &Descriptor{
-		Version: "0.4",
+		Version: "0.1",
 		IP:      ip,
 		Port:    port,
 		Payload: payload,
