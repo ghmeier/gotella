@@ -67,7 +67,7 @@ func register(r *receiver.Receiver, discovery string) {
 	r.Register(models.PONG, handlers.HandlePong(ctx))
 	r.Register(models.QUERY, handlers.HandleQuery(ctx))
 	r.Register(models.QUERYHIT, handlers.HandleQueryHit(ctx))
-	r.Register(models.PUSH, handlers.HandlePush(ctx))
+	r.Register(models.STREAM, handlers.HandleStream(ctx))
 	r.Register(models.INVALID, handlers.HandleInvalid(ctx))
 	r.RegisterProbe(handlers.NewProbe(ctx, discovery))
 }

@@ -29,6 +29,10 @@ type Pong struct {
 	Size  int64 `json:"size"`
 }
 
+type Stream struct {
+	FileName string `json:"filename"`
+}
+
 type Query struct {
 	Filename    string `json:"filename"`
 	RequestIP   string `json:"ip"`
@@ -114,7 +118,19 @@ func QueryHitDescriptor(ip string, port int, q *QueryHit, d *Descriptor) *Descri
 	header := &DescriptorHeader{
 		ID:     d.Header.ID,
 		Type:   QUERYHIT,
-		TTP:    d.Header.Hops,
+		TTL:    d.Header.Hops,
+		Hops:   0,
+		Length: len(buf),
+	}
+	return NewDescriptor(ip, port, buf, header)
+}
+
+func StreamDescriptor(ip string, port int, s *Stream) *Descriptor {
+	buf, _ := json.Marshal(s)
+	header := &DescriptorHeader{
+		ID:     uuid.NewUUID(),
+		Type:   STREAM,
+		TTL:    1,
 		Hops:   0,
 		Length: len(buf),
 	}
@@ -153,8 +169,8 @@ func toDescriptorType(i int) DescriptorType {
 		return QUERY
 	case QUERYHIT:
 		return QUERYHIT
-	case PUSH:
-		return PUSH
+	case STREAM:
+		return STREAM
 	default:
 		return INVALID
 	}
@@ -167,6 +183,6 @@ const (
 	PONG     = 2
 	QUERY    = 3
 	QUERYHIT = 4
-	PUSH     = 5
+	STREAM   = 5
 	INVALID  = -1
 )

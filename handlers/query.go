@@ -44,13 +44,14 @@ func (h *queryHandler) query(conn *net.TCPConn, d *models.Descriptor) {
 
 	host, port := localAddr(conn)
 	if h.files.Exists(query.Filename) {
-		h.hit(host, port, query, d)
+		h.hit(host, port, &query, d)
 		return
 	}
 
 	next := d.Next()
 	next.IP = host
 	next.Port = port
+	fmt.Println("%s: pushing query to peers\n", d.Header.ID.String())
 	h.propogate(next)
 }
 
@@ -59,7 +60,7 @@ func (h *queryHandler) hit(host string, port int, query *models.Query, d *models
 		IP:      host,
 		Port:    port,
 		Hits:    1,
-		Results: make([]Result, 0),
+		Results: make([]models.Result, 0),
 	}
 	result := models.Result{
 		Name:  query.Filename,

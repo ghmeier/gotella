@@ -54,6 +54,6 @@ func (h *pongHandler) pong(conn *net.TCPConn, d *models.Descriptor) {
 	if next.Header.TTL < 0 {
 		return
 	}
-	fmt.Printf("%s: passing pong to %s:%d TTL: %d\n", d.Header.ID.String(), cache.IP, cache.Port)
+	fmt.Printf("%s: passing pong to %s:%d\n", d.Header.ID.String(), cache.IP, cache.Port)
 	connectAndSend(fmt.Sprintf("%s:%d", cache.IP, cache.Port), next)
 }

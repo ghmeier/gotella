@@ -8,7 +8,7 @@ import (
 
 type FileSearch interface {
 	Exists(string) bool
-	FileSize(string) int
+	FileSize(string) int64
 	Get(string) ([]byte, error)
 	Save(string, []byte) error
 	Size() int64
@@ -38,7 +38,7 @@ func (h *fsHelper) Exists(fName string) bool {
 	return ok
 }
 
-func (h *fsHelper) FileSize(fName string) int {
+func (h *fsHelper) FileSize(fName string) int64 {
 	h.update()
 	return h.files[fName]
 }
