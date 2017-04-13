@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 type FileSearch interface {
@@ -34,6 +35,7 @@ func NewFiles(dir string) FileSearch {
 
 func (h *fsHelper) Exists(fName string) bool {
 	h.update()
+	fName = trim(fName)
 	_, ok := h.files[fName]
 	return ok
 }
@@ -45,11 +47,12 @@ func (h *fsHelper) FileSize(fName string) int64 {
 
 func (h *fsHelper) Get(fName string) ([]byte, error) {
 	h.update()
+	fName = trim(fName)
 	if _, ok := h.files[fName]; !ok {
 		return nil, fmt.Errorf("unable to find  file: %s", fName)
 	}
 
-	buf, err := ioutil.ReadFile(fmt.Sprintf("./%s/%s", h.dir, fName))
+	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", h.dir, fName))
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +60,8 @@ func (h *fsHelper) Get(fName string) ([]byte, error) {
 }
 
 func (h *fsHelper) Save(fName string, data []byte) error {
-	err := ioutil.WriteFile(fmt.Sprintf("./%s/%s", h.dir, fName), data, os.ModePerm)
+	fName = trim(fName)
+	err := ioutil.WriteFile(fmt.Sprintf("%s/%s", h.dir, fName), data, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -81,7 +85,7 @@ func (h *fsHelper) update() {
 		return
 	}
 
-	files, err := ioutil.ReadDir(fmt.Sprintf("./%s", h.dir))
+	files, err := ioutil.ReadDir(fmt.Sprintf("%s", h.dir))
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -97,4 +101,8 @@ func (h *fsHelper) update() {
 	}
 
 	h.changed = false
+}
+
+func trim(s string) string {
+	return strings.Trim(s, "\n\t ")
 }

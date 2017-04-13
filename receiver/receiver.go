@@ -12,6 +12,7 @@ type ReceiverFunc func(*net.TCPConn, *models.Descriptor)
 
 type Probe interface {
 	Send(net.Addr)
+	Query(net.Addr, string)
 }
 
 type Receiver struct {
@@ -47,6 +48,7 @@ func (r *Receiver) Start() error {
 
 	r.addr = addr
 	r.listener = listener
+	fmt.Printf("LISTENING at %s\n", addr.String())
 	go r.listen()
 
 	return nil
@@ -55,8 +57,12 @@ func (r *Receiver) Start() error {
 func (r *Receiver) Probe() {
 	for {
 		r.probe.Send(r.listener.Addr())
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
 	}
+}
+
+func (r *Receiver) Query(q string) {
+	go r.probe.Query(r.listener.Addr(), q)
 }
 
 func (r *Receiver) Register(route models.DescriptorType, f ReceiverFunc) {

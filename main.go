@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -20,7 +21,14 @@ func main() {
 		fmt.Println("ERROR creating reciever: %s\n", err.Error())
 	}
 
-	r.Probe()
+	go r.Probe()
+
+	for {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Println("ENTER A FILENAME TO SEARCH AND PRESS ENTER:")
+		text, _ := reader.ReadString('\n')
+		r.Query(text)
+	}
 }
 
 func peer() string {
@@ -36,23 +44,23 @@ func peer() string {
 func port() string {
 	args := os.Args[1:]
 
-	port := "8080"
 	if len(args) > 0 && args[0] != "" {
-		port = args[0]
+		return args[0]
 	}
 
-	return port
+	fmt.Println("ERROR: Enter server port as first argument")
+	return ""
 }
 
 func redis() string {
 	args := os.Args[1:]
 
-	redis := "127.0.0.1:8080"
 	if len(args) > 1 && args[1] != "" {
-		redis = "127.0.0.1:" + args[1]
+		return "127.0.0.1:" + args[1]
 	}
 
-	return redis
+	fmt.Println("ERROR: Enter redis host:port as second argument")
+	return ""
 }
 
 func register(r *receiver.Receiver, discovery string) {

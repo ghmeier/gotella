@@ -21,7 +21,7 @@ func HandleQueryHit(ctx *Context) receiver.ReceiverFunc {
 }
 
 func (h *queryHitHandler) queryHit(conn *net.TCPConn, d *models.Descriptor) {
-	fmt.Println("%s: query hit from %s:%d\n", d.Header.ID.String(), d.IP, d.Port)
+	fmt.Printf("%s: query hit from %s:%d\n", d.Header.ID.String(), d.IP, d.Port)
 	cache, err := h.descriptor.Get(d.Header.ID)
 	if err != nil {
 		printError(err)
@@ -31,7 +31,8 @@ func (h *queryHitHandler) queryHit(conn *net.TCPConn, d *models.Descriptor) {
 		return
 	}
 
-	if cache.Port == 0 && cache.IP == "" {
+	host, port := localAddr(conn)
+	if cache.Port == port && cache.IP == host {
 		// query hit was meant for us, attempt to download
 		conn.Close()
 		h.streamFile(d)
@@ -77,5 +78,6 @@ func (h *queryHitHandler) streamFile(d *models.Descriptor) {
 		printError(err)
 		return
 	}
+	fmt.Printf("%s: streamed %s from %s:%d\n", d.Header.ID, result.Name, hit.IP, hit.Port)
 	h.files.Save(result.Name, buf)
 }

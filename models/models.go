@@ -36,7 +36,7 @@ type Stream struct {
 type Query struct {
 	Filename    string `json:"filename"`
 	RequestIP   string `json:"ip"`
-	RequestPort string `json:"port"`
+	RequestPort int    `json:"port"`
 }
 
 type QueryHit struct {

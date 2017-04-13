@@ -21,7 +21,7 @@ func HandleQuery(ctx *Context) receiver.ReceiverFunc {
 }
 
 func (h *queryHandler) query(conn *net.TCPConn, d *models.Descriptor) {
-	fmt.Println("%s: query from %s:%d\n", d.Header.ID.String(), d.IP, d.Port)
+	fmt.Printf("%s: query from %s:%d\n", d.Header.ID.String(), d.IP, d.Port)
 	e, err := h.descriptor.Exists(d.Header.ID)
 	if err != nil {
 		printError(err)
@@ -51,7 +51,7 @@ func (h *queryHandler) query(conn *net.TCPConn, d *models.Descriptor) {
 	next := d.Next()
 	next.IP = host
 	next.Port = port
-	fmt.Println("%s: pushing query to peers\n", d.Header.ID.String())
+	fmt.Printf("%s: pushing query to peers\n", d.Header.ID.String())
 	h.propogate(next)
 }
 

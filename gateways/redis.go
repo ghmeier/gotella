@@ -14,6 +14,7 @@ type Redis interface {
 	Append(string, string) error
 	List(key string) ([]string, error)
 	Len(key string) (int, error)
+	Remove(key, value string)
 }
 
 type rClient struct {
@@ -45,6 +46,10 @@ func (c *rClient) Get(key string) ([]byte, error) {
 func (c *rClient) Append(key string, value string) error {
 	cmd := c.client.SAdd(c.key(key), value)
 	return cmd.Err()
+}
+
+func (c *rClient) Remove(key, value string) {
+	c.client.SRem(c.key(key), value)
 }
 
 func (c *rClient) List(key string) ([]string, error) {
